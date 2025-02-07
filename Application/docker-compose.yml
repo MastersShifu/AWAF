@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: auth-postgres
+    environment:
+      POSTGRES_USER: shifu
+      POSTGRES_PASSWORD: 9557
+      POSTGRES_DB: test1
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - auth_network
+
+  redis:
+    image: redis:alpine
+    container_name: auth-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - auth_network
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    container_name: auth-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: test
+      RABBITMQ_DEFAULT_PASS: test
+    ports:
+      - "5672:5672"   # Основной порт для обмена сообщениями
+      - "15672:15672"  # Порт для интерфейса управления RabbitMQ
+    networks:
+      - auth_network
+
+  auth-microservice:
+    build:
+      context: ./Auth-Microservice
+    container_name: my_go_service
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_HOST=auth-postgres
+      - DB_PORT=5432
+      - DB_USER=shifu
+      - DB_PASSWORD=9557
+      - DB_NAME=test1
+      - REDIS_HOST=auth-redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=auth-rabbitmq
+      - RABBITMQ_PORT=5672
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - auth_network
+
+
+  fastapi-service:
+    build:
+      context: ./FastAPI-app
+    container_name: auth-fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=auth-postgres
+      - DB_PORT=5432
+      - DB_USER=shifu
+      - DB_PASSWORD=9557
+      - DB_NAME=test1
+      - REDIS_HOST=auth-redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=auth-rabbitmq
+      - RABBITMQ_PORT=5672
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - auth_network
+
+networks:
+  auth_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

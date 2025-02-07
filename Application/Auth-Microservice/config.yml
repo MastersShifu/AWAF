@@ -1,0 +1,17 @@
+db:
+  user: "shifu"
+  password: "9557"
+  name: "test1"
+  host: "auth-postgres"
+  port: "5432"
+
+redis:
+  host: "auth-redis:6379"
+  password: ""
+  db: 0
+
+smtp:
+  SMTP_host: "smtp.gmail.com"
+  SMTP_port: "587"
+  SMTP_email: "shifu20000@gmail.com"
+  SMTP_password: "speg kvoc bbxi wxbm"
